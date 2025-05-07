@@ -10,8 +10,8 @@ workflows:
       - npm run generate
       - npm install -g @capacitor/cli
       - npx cap copy
-      - mkdir -p android/capacitor-cordova-android-plugins
-      - touch android/capacitor-cordova-android-plugins/cordova.variables.gradle
+#      - mkdir -p android/capacitor-cordova-android-plugins
+#      - touch android/capacitor-cordova-android-plugins/cordova.variables.gradle
       - cd android && chmod +x ./gradlew
       - cd android && ./gradlew assembleDebug
     artifacts:
