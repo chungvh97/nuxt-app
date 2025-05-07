@@ -1,3 +1,14 @@
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
