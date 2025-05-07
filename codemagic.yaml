@@ -9,7 +9,6 @@ workflows:
       - npm install
       - npm run generate
       - npm install -g @capacitor/cli
-      - npx cap add android
       - npx cap copy
       - cd android
       - chmod +x ./gradlew  # ✅ Cấp quyền thực thi để tránh lỗi Permission denied
