@@ -1,7 +1,7 @@
 // capacitor.config.ts
 const config = {
-  appId: 'com.example.productmanager',
-  appName: 'Product Manager',
+  appId: 'com.example.nuxtapp',
+  appName: 'NuxtQuasarApp',
   webDir: 'dist',
   bundledWebRuntime: false
 };

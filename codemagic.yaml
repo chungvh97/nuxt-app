@@ -9,7 +9,6 @@ workflows:
       - npm install
       - npm run generate
       - npm install -g @capacitor/cli
-      - npx cap init nuxtapp com.example.nuxtapp --web-dir=dist --npm-client=npm
       - npx cap add android
       - npx cap copy
       - cd android
