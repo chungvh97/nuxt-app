@@ -1,9 +1,7 @@
-// capacitor.config.ts
 const config = {
   appId: 'com.example.nuxtapp',
   appName: 'NuxtQuasarApp',
-  webDir: 'dist',
+  webDir: '.output/public', // ✅ sửa tại đây
   bundledWebRuntime: false
-};
-
+}
 export default config;
