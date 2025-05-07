@@ -1,42 +1,26 @@
 {
-  "name": "quasar-moneyballs",
-  "version": "0.0.1",
-  "description": "A Quasar Project",
-  "productName": "Moneyballs",
-  "author": "Danny Connell",
+  "name": "nuxt-app",
   "private": true,
+  "type": "module",
   "scripts": {
-    "icons": "icongenie generate -i app-icon.png --skip-trim --theme-color 00695c --splashscreen-icon-ratio 25",
-    "dev": "quasar dev",
-    "dev:mac": "quasar dev -m electron",
-    "dev:ios": "quasar dev -m capacitor -T ios",
-    "dev:android": "quasar dev -m capacitor -T android",
-    "build": "quasar build",
-    "build:mac": "quasar build -m electron",
-    "build:win": "quasar build -m electron --target win32",
-    "build:ios": "quasar build -m capacitor -T ios --ide",
-    "build:android": "quasar build -m capacitor -T android --ide"
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@capacitor/dialog": "^6.0.0",
-    "@quasar/extras": "^1.16.4",
-    "pinia": "^2.0.11",
-    "quasar": "^2.16.0",
-    "sortablejs": "^1.15.2",
-    "sortablejs-vue3": "^1.2.11",
-    "vue": "^3.4.18",
-    "vue-router": "^4.0.12"
-  },
-  "devDependencies": {
-    "@electron/packager": "^18.3.3",
-    "@quasar/app-vite": "^1.9.0",
-    "autoprefixer": "^10.4.2",
-    "electron": "^31.0.1",
-    "postcss": "^8.4.14"
-  },
-  "engines": {
-    "node": "^20 || ^18 || ^16",
-    "npm": ">= 6.13.4",
-    "yarn": ">= 1.21.1"
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/ios": "^7.2.0",
+    "@quasar/extras": "^1.16.17",
+    "dayjs": "^1.11.13",
+    "jspdf": "^3.0.1",
+    "nuxt": "^3.17.2",
+    "nuxt-quasar-ui": "^2.1.12",
+    "quasar": "^2.18.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
   }
 }
