@@ -24,6 +24,10 @@ allprojects {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17  // ✅ ép Java 17 để tránh lỗi "invalid source release: 21"
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
