@@ -7,10 +7,10 @@ workflows:
       java: 17
     scripts:
       - npm install
-        - npm run generate
-        - npm install -g @capacitor/cli
-        - npx cap copy
-        - cd android && chmod +x ./gradlew       # ✅ sửa lỗi file not found
-        - cd android && ./gradlew assembleDebug  # ✅ build apk
+      - npm run generate
+      - npm install -g @capacitor/cli
+      - npx cap copy
+      - cd android && chmod +x ./gradlew
+      - cd android && ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/**/*.apk
