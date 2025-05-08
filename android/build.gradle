@@ -1,13 +1,4 @@
 
-java {
-  toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
-  }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
-}
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
@@ -35,10 +26,11 @@ allprojects {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17  // ✅ ép Java 17 để tránh lỗi "invalid source release: 21"
-}
-
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
 }
