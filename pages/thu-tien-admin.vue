@@ -53,7 +53,16 @@ function normalize(str: string): string {
   return str.toString().trim().replace(/\s+/g, ' ')
 }
 onMounted(async () => {
-  fetchMembers()
+  try {
+    const res = await fetch('/api/members')
+    const data = await res.json()
+    store.people = data
+    jsonOutput.value = JSON.stringify(data, null, 2)
+    editableJson.value = JSON.stringify(data, null, 2)
+    notify({ type: 'info', message: '📥 Đã tải dữ liệu từ API /api/members' })
+  } catch (err) {
+    notify({ type: 'negative', message: '❌ Không thể tải dữ liệu từ API' })
+  }
 })
 
 async function onImportExcel(files: File[]) {
@@ -89,9 +98,9 @@ async function onImportExcel(files: File[]) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(jsonList)
       })
-      notify({timeout: 1000, type: 'positive', message: '📁 Đã lưu vào members.json' })
+      notify({ type: 'positive', message: '📁 Đã lưu vào members.json' })
     } catch (err) {
-      notify({timeout: 1000, type: 'negative', message: '❌ Không thể lưu vào members.json' })
+      notify({ type: 'negative', message: '❌ Không thể lưu vào members.json' })
     }
 
     isLoading.value = false
@@ -101,29 +110,31 @@ async function onImportExcel(files: File[]) {
 }
 
 
-
-async function fetchMembers() {
+function applyJsonEdit() {
   try {
-    const res = await fetch('/api/members')
-    const data = await res.json()
-    store.people = data
-    jsonOutput.value = JSON.stringify(data, null, 2)
-    editableJson.value = JSON.stringify(data, null, 2)
-    notify({timeout: 1000, type: 'info', message: '📥 Đã tải dữ liệu từ API /api/members' })
+    const parsed = JSON.parse(editableJson.value)
+    store.people = parsed
+    showEditDialog.value = false
+    notify({ type: 'positive', message: '✅ Đã cập nhật danh sách' })
   } catch (err) {
-    notify({timeout: 1000, type: 'negative', message: '❌ Không thể tải dữ liệu từ API' })
+    notify({ type: 'negative', message: '❌ JSON không hợp lệ' })
   }
 }
+function openEditDialog() {
+  editableJson.value = JSON.stringify(store.people, null, 2)
+  showEditDialog.value = true
+}
+
 </script>
 
 <template>
   <q-layout>
     <q-page-container>
       <!--      add class khi trên 768 thì dùng row, còn dưới 768 thì dùng column-->
-<!--      <div class="row row-wrap q-gutter-sm q-mt-sm q-mx-sm">-->
-<!--        <q-uploader label="Import danh sách" accept=".xlsx" @added="onImportExcel" />-->
-<!--        <StatementUpload />-->
-<!--      </div>-->
+            <div class="row row-wrap q-gutter-sm q-mt-sm q-mx-sm">
+                <q-uploader label="Import danh sách" accept=".xlsx" @added="onImportExcel" />
+                <StatementUpload />
+            </div>
 
       <h4 class="q-my-sm">Dánh sách đóng tiền</h4>
       <q-separator class="q-my-sm" />
@@ -132,7 +143,7 @@ async function fetchMembers() {
         <q-table
             :rows="store.people"
             :loading="isLoading"
-            :pagination="{ rowsPerPage: 100 }"
+            :pagination="{ rowsPerPage: 10 }"
             @row-click="(_, row) => openPaymentModal(row)"
             :columns="[
               { name: 'name', label: 'Họ tên', field: 'name', align: 'left' },
@@ -159,7 +170,7 @@ async function fetchMembers() {
         />
 
         <!-- Gọi component modal -->
-        <PaymentDialog v-model="showDialog" :person="selectedPerson" @refresh="fetchMembers"/>
+        <PaymentDialog v-model="showDialog" :person="selectedPerson" />
       </q-page>
     </q-page-container>
   </q-layout>

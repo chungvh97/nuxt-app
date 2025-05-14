@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import * as XLSX from 'xlsx'
 import { usePaymentStore } from '~/stores/payment'
+import {useQuasar} from "quasar";
+const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar();
 
 const emit = defineEmits<{
   (e: 'update:loading', val: boolean): void
@@ -83,16 +85,32 @@ function onFileAdded(files: File[]) {
         })
       })
 
-      alert(`✅ Đối chiếu xong: ${matchedCount} người đã được đánh dấu là đã đóng tiền.`)
+      // alert(`✅ Đối chiếu xong: ${matchedCount} người đã được đánh dấu là đã đóng tiền.`)
+      matchData()
     } catch (err) {
-      console.error('❌ Lỗi xử lý file Excel:', err)
-      alert('⚠️ Có lỗi khi đọc file. Vui lòng kiểm tra lại.')
+      notify({ type: 'negative', message: '❌ Có lỗi khi đọc file. Vui lòng kiểm tra lại.', timeout: 1000 })
     }
 
     emit('update:loading', false) // 👉 Kết thúc loading
   }
 
   reader.readAsArrayBuffer(file)
+}
+
+async function matchData () {
+  try {
+
+    await fetch('/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(store.people)
+    })
+
+    notify({ type: 'positive', message: '✅ Đã cập nhật trạng thái confirm', timeout: 1000 })
+  } catch (err) {
+    notify({ type: 'negative', message: '❌ Lỗi xử lý khi đối chiếu', timeout: 1000 })
+  }
+
 }
 </script>
 
