@@ -8,35 +8,6 @@ const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQu
 const store = usePaymentStore()
 
 
-const qrUrl = computed(() => {
-  const base = `https://img.vietqr.io/image/VIB-006365321-compact2.png`
-  const params = new URLSearchParams({
-    addInfo: name.value
-  })
-  return `${base}?${params.toString()}`
-})
-const users = ref([])
-
-
-function onFileAdded(files:any) {
-  isLoading.value = true
-  const reader = new FileReader()
-  reader.onload = (e:any) => {
-    const workbook = XLSX.read(e.target.result, { type: 'binary' })
-    const sheet = workbook.Sheets[workbook.SheetNames[0]]
-    const data = XLSX.utils.sheet_to_json(sheet)
-
-    // set data to store
-    store.setPeople(data.map((row:any) => ({
-      name: row['Tên'],
-      amount: row['Số tiền'],
-      paid: false
-    })))
-  }
-  isLoading.value = false
-  reader.readAsBinaryString(files[0])
-}
-
 const selectedPerson = ref<{ name: string; amount: number } | null>(null)
 const showDialog = ref(false)
 
@@ -48,21 +19,22 @@ function openPaymentModal(row: { name: string; amount: number }) {
 }
 const jsonOutput = ref('')
 const editableJson = ref('')
-const showEditDialog = ref(false)
 function normalize(str: string): string {
   return str.toString().trim().replace(/\s+/g, ' ')
 }
-onMounted(async () => {
-  try {
-    const res = await fetch('/api/members')
-    const data = await res.json()
-    store.people = data
+
+async function fetchMembers() {
+  const { data, error } = await store.fetchMembers()
+  if (data) {
     jsonOutput.value = JSON.stringify(data, null, 2)
     editableJson.value = JSON.stringify(data, null, 2)
     notify({ type: 'info', message: '📥 Đã tải dữ liệu từ API /api/members' })
-  } catch (err) {
-    notify({ type: 'negative', message: '❌ Không thể tải dữ liệu từ API' })
   }
+  if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
+}
+
+onMounted(async () => {
+  await fetchMembers()
 })
 
 async function onImportExcel(files: File[]) {
@@ -92,37 +64,13 @@ async function onImportExcel(files: File[]) {
     editableJson.value = JSON.stringify(jsonList, null, 2)
 
     // ✅ Gửi tới members API
-    try {
-      await fetch('/api/members', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(jsonList)
-      })
-      notify({ type: 'positive', message: '📁 Đã lưu vào members.json' })
-    } catch (err) {
-      notify({ type: 'negative', message: '❌ Không thể lưu vào members.json' })
-    }
+    await store.insertMembers(jsonList)
+    notify({ type: 'positive', message: '✅ Đã import và đẩy lên Supabase', timeout: 1000 })
 
     isLoading.value = false
   }
 
   reader.readAsArrayBuffer(file)
-}
-
-
-function applyJsonEdit() {
-  try {
-    const parsed = JSON.parse(editableJson.value)
-    store.people = parsed
-    showEditDialog.value = false
-    notify({ type: 'positive', message: '✅ Đã cập nhật danh sách' })
-  } catch (err) {
-    notify({ type: 'negative', message: '❌ JSON không hợp lệ' })
-  }
-}
-function openEditDialog() {
-  editableJson.value = JSON.stringify(store.people, null, 2)
-  showEditDialog.value = true
 }
 
 </script>
@@ -143,7 +91,7 @@ function openEditDialog() {
         <q-table
             :rows="store.people"
             :loading="isLoading"
-            :pagination="{ rowsPerPage: 10 }"
+            :pagination="{ rowsPerPage: 100 }"
             @row-click="(_, row) => openPaymentModal(row)"
             :columns="[
               { name: 'name', label: 'Họ tên', field: 'name', align: 'left' },
@@ -170,7 +118,7 @@ function openEditDialog() {
         />
 
         <!-- Gọi component modal -->
-        <PaymentDialog v-model="showDialog" :person="selectedPerson" />
+        <PaymentDialog v-model="showDialog" :person="selectedPerson" @refresh="fetchMembers"/>
       </q-page>
     </q-page-container>
   </q-layout>

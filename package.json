@@ -16,6 +16,7 @@
     "@capacitor/ios": "^7.2.0",
     "@pinia/nuxt": "^0.11.0",
     "@quasar/extras": "^1.16.17",
+    "@supabase/supabase-js": "^2.49.4",
     "dayjs": "^1.11.13",
     "h3": "^1.15.3",
     "jspdf": "^3.0.1",

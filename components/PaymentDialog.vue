@@ -1,53 +1,58 @@
 <script setup lang="ts">
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineProps, defineEmits, ref, watch } from 'vue'
 import dayjs from 'dayjs'
-import {useQuasar} from "quasar";
-const { bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar();
+import { useQuasar } from 'quasar'
+import { usePaymentStore } from '~/stores/payment'
+
+const { notify } = useQuasar()
+const store = usePaymentStore()
 
 const props = defineProps<{
   modelValue: boolean
-  person: {id: number, name: string; amount: number, paid: boolean, confirm: boolean } | null
+  person: { id: number, name: string; amount: number, paid: boolean, confirm: boolean } | null
 }>()
-
 
 const emit = defineEmits(['update:modelValue', 'refresh'])
 
 const currentMonth = dayjs().month() + 1
 const checked = ref(false)
-const data = computed(() => props.person)
+
 const dialog = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val)
 })
 
+watch(() => props.modelValue, (val) => {
+  if (val && props.person) {
+    checked.value = props.person.paid
+  } else {
+    checked.value = false
+  }
+})
+
 function generateVietQRUrl(name: string, amount: number): string {
-  const bankId = 'VIB' // Ví dụ: Techcombank
-  const accountNo = '006365321' // Số tài khoản của bạn
+  const bankId = 'VIB'
+  const accountNo = '006365321'
   const info = encodeURIComponent(`${name} tháng ${currentMonth} ${amount}VNĐ`)
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-print.png?amount=${amount}&addInfo=${info}`
 }
+
 async function onChecked(val: boolean) {
   if (!props?.person?.id) return
   try {
-    const res = await fetch(`/api/members/${props.person.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({...props.person, paid: val})
-    })
-    if (!res.ok) throw new Error()
-    notify({timeout:1000, type: 'positive', message: '✅ Đã xác nhận thanh toán' })
+    const updated = {
+      ...props.person,
+      paid: val,
+    }
+    const { error } = await store.updateMember(props.person.id, updated)
+    if (error) throw error
+
+    notify({ type: 'positive', message: '✅ Đã xác nhận thanh toán', timeout: 1000 })
     emit('update:modelValue', false)
     emit('refresh')
   } catch (err) {
-    notify({timeout:1000, type: 'negative', message: '❌ Lỗi khi lưu dữ liệu' })
+    notify({ type: 'negative', message: '❌ Lỗi khi lưu dữ liệu', timeout: 1000 })
   }
-}
-
-function updateList(updatedEntry: any) {
-  const oldList = JSON.parse(localStorage.getItem('members') || '[]')
-  const updated = oldList.map((m: any) => m.id === updatedEntry.id ? updatedEntry : m)
-  localStorage.setItem('members', JSON.stringify(updated))
-  return updated
 }
 </script>
 
