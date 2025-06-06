@@ -1,7 +1,7 @@
 // composables/useSupabase.ts
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://cqqbxnpuuupakoskqllh.supabase.co' // ← thay bằng của bạn
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxcWJ4bnB1dXVwYWtvc2txbGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyMTQ4MjMsImV4cCI6MjA2Mjc5MDgyM30.dZ45bmG5wqbpjjDw8UWaUjaIzDhIqI1dsqL32_alUjE'    // ← thay bằng của bạn
+const supabaseUrl = 'https://yykbeettvbazwlfckcdt.supabase.co' // ← thay bằng của bạn
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5a2JlZXR0dmJhendsZmNrY2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNzk2MzgsImV4cCI6MjA2NDc1NTYzOH0.RY3PPn6Yjwl9Eia5mwICtSC3-BqL3VsnMFVkJHdcaYk'    // ← thay bằng của bạn
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
