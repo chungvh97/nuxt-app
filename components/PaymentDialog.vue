@@ -16,6 +16,8 @@ const emit = defineEmits(['update:modelValue', 'refresh'])
 
 const currentMonth = dayjs().month() + 1
 const checked = ref(false)
+const isWaitingForPaid = ref(false)
+let intervalId: any = null
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -24,12 +26,13 @@ const dialog = computed({
 
 watch(() => props.modelValue, (val) => {
   if (val && props.person) {
-    console.log('121')
-    waitForPaidStatus()
+    // Khi mở dialog → bắt đầu đợi paid
     checked.value = props.person.paid
+    startWaitingForPaid()
   } else {
+    // Khi đóng dialog → clear interval
     checked.value = false
-    clearInterval(intervalId)
+    stopWaitingForPaid()
   }
 })
 
@@ -37,11 +40,11 @@ function generateVietQRUrl(name: string, amount: number): string {
   const info = encodeURIComponent(`${name} tháng ${currentMonth}`)
   return `https://qr.sepay.vn/img?acc=VQRQACTIP6004&bank=MBBank&amount=${amount}&des=${info}`
 }
-let intervalId: any = null
-const isWaitingForPaid = ref(false)
 
-function waitForPaidStatus() {
+function startWaitingForPaid() {
   if (!props.person?.id) return
+  if (intervalId) return // tránh chạy nhiều interval
+
   isWaitingForPaid.value = true
 
   intervalId = setInterval(async () => {
@@ -53,15 +56,21 @@ function waitForPaidStatus() {
 
     const updatedPerson = data?.find((m: any) => m.id === props.person?.id)
     if (updatedPerson && updatedPerson.paid) {
-      clearInterval(intervalId)
-      intervalId = null
+      stopWaitingForPaid()
       notify({ type: 'positive', message: '✅ Đã nhận thanh toán từ SePay', timeout: 1000 })
-      emit('update:modelValue', false)
-      emit('refresh')
+      emit('update:modelValue', false) // đóng dialog
+      emit('refresh') // refresh list
     }
   }, 3000)
 }
 
+function stopWaitingForPaid() {
+  if (intervalId) {
+    clearInterval(intervalId)
+    intervalId = null
+    isWaitingForPaid.value = false
+  }
+}
 </script>
 
 <template>
@@ -73,12 +82,18 @@ function waitForPaidStatus() {
 
       <q-card-section>
         <div><b>Số tiền:</b> {{ person?.amount.toLocaleString() }} VND</div>
+
         <div class="q-mt-md text-center">
           <img
               :src="generateVietQRUrl(person?.name || '', person?.amount || 0)"
               alt="QR Code"
               style="width: 350px; height: auto;"
           />
+        </div>
+
+        <div class="q-mt-md text-center text-blue" v-if="isWaitingForPaid">
+          <q-spinner size="30px" color="primary" />
+          <div class="q-mt-sm">Đang chờ xác nhận từ SePay...</div>
         </div>
       </q-card-section>
 
