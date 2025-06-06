@@ -8,14 +8,6 @@ import { supabase } from '~/composables/useSupabase'
 const store = usePaymentStore()
 
 
-const qrUrl = computed(() => {
-  const base = `https://img.vietqr.io/image/VIB-006365321-compact2.png`
-  const params = new URLSearchParams({
-    addInfo: name.value
-  })
-  return `${base}?${params.toString()}`
-})
-
 const selectedPerson = ref<{ name: string; amount: number } | null>(null)
 const showDialog = ref(false)
 
@@ -48,7 +40,7 @@ async function fetchMembers() {
   <q-layout>
     <q-page-container>
 
-      <h4 class="q-my-sm">Dánh sách đóng tiền</h4>
+      <h4 class="q-my-sm">Danh sách đóng tiền</h4>
       <q-separator class="q-my-sm" />
 
       <q-page>

@@ -24,36 +24,44 @@ const dialog = computed({
 
 watch(() => props.modelValue, (val) => {
   if (val && props.person) {
+    console.log('121')
+    waitForPaidStatus()
     checked.value = props.person.paid
   } else {
     checked.value = false
+    clearInterval(intervalId)
   }
 })
 
 function generateVietQRUrl(name: string, amount: number): string {
-  const bankId = 'VIB'
-  const accountNo = '006365321'
-  const info = encodeURIComponent(`${name} tháng ${currentMonth} ${amount}VNĐ`)
-  return `https://img.vietqr.io/image/${bankId}-${accountNo}-print.png?amount=${amount}&addInfo=${info}`
+  const info = encodeURIComponent(`${name} tháng ${currentMonth}`)
+  return `https://qr.sepay.vn/img?acc=VQRQACTIP6004&bank=MBBank&amount=${amount}&des=${info}`
 }
+let intervalId: any = null
+const isWaitingForPaid = ref(false)
 
-async function onChecked(val: boolean) {
-  if (!props?.person?.id) return
-  try {
-    const updated = {
-      ...props.person,
-      paid: val,
+function waitForPaidStatus() {
+  if (!props.person?.id) return
+  isWaitingForPaid.value = true
+
+  intervalId = setInterval(async () => {
+    const { data, error } = await store.fetchMembers()
+    if (error) {
+      console.error('Lỗi khi fetch members:', error)
+      return
     }
-    const { error } = await store.updateMember(props.person.id, updated)
-    if (error) throw error
 
-    notify({ type: 'positive', message: '✅ Đã xác nhận thanh toán', timeout: 1000 })
-    emit('update:modelValue', false)
-    emit('refresh')
-  } catch (err) {
-    notify({ type: 'negative', message: '❌ Lỗi khi lưu dữ liệu', timeout: 1000 })
-  }
+    const updatedPerson = data?.find((m: any) => m.id === props.person?.id)
+    if (updatedPerson && updatedPerson.paid) {
+      clearInterval(intervalId)
+      intervalId = null
+      notify({ type: 'positive', message: '✅ Đã nhận thanh toán từ SePay', timeout: 1000 })
+      emit('update:modelValue', false)
+      emit('refresh')
+    }
+  }, 3000)
 }
+
 </script>
 
 <template>
@@ -65,7 +73,6 @@ async function onChecked(val: boolean) {
 
       <q-card-section>
         <div><b>Số tiền:</b> {{ person?.amount.toLocaleString() }} VND</div>
-        <q-checkbox @update:model-value="onChecked" v-model="checked" label="Xác nhận đã thanh toán" class="q-mt-md" />
         <div class="q-mt-md text-center">
           <img
               :src="generateVietQRUrl(person?.name || '', person?.amount || 0)"
