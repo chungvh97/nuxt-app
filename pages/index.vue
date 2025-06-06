@@ -30,7 +30,7 @@ async function fetchMembers() {
   if (data) {
     jsonOutput.value = JSON.stringify(data, null, 2)
     editableJson.value = JSON.stringify(data, null, 2)
-    notify({ type: 'info', message: '📥 Đã tải dữ liệu từ API /api/members' })
+    notify({ type: 'info', message: '📥 Load dữ liệu thành công' })
   }
   if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
 }

@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { usePaymentStore } from '~/stores/payment'
-import * as XLSX from "xlsx";
-import {useQuasar} from "quasar";
-const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar();
+import { useQuasar } from 'quasar'
+
+const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar()
 
 const store = usePaymentStore()
 
-
 const selectedPerson = ref<{ name: string; amount: number } | null>(null)
 const showDialog = ref(false)
-
 const isLoading = ref(false)
 
 function openPaymentModal(row: { name: string; amount: number }) {
   selectedPerson.value = row
   showDialog.value = true
 }
+
 const jsonOutput = ref('')
 const editableJson = ref('')
+
 function normalize(str: string): string {
   return str.toString().trim().replace(/\s+/g, ' ')
 }
@@ -28,7 +28,7 @@ async function fetchMembers() {
   if (data) {
     jsonOutput.value = JSON.stringify(data, null, 2)
     editableJson.value = JSON.stringify(data, null, 2)
-    notify({ type: 'info', message: '📥 Đã tải dữ liệu từ API /api/members' })
+    notify({ type: 'info', message: '📥 Load dữ liệu thành công' })
   }
   if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
 }
@@ -43,29 +43,52 @@ async function onImportExcel(files: File[]) {
 
   isLoading.value = true
   const reader = new FileReader()
+
   reader.onload = async (evt) => {
+    // Dynamic import XLSX trong client
+    let XLSX: any
+    if (process.client) {
+      const xlsxModule = await import('xlsx')
+      XLSX = xlsxModule
+    } else {
+      notify({ type: 'negative', message: '❌ Không hỗ trợ đọc file XLSX trên server' })
+      isLoading.value = false
+      return
+    }
+
     const data = new Uint8Array(evt.target!.result as ArrayBuffer)
     const workbook = XLSX.read(data, { type: 'array' })
     const sheet = workbook.Sheets[workbook.SheetNames[0]]
     const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 })
 
-    const jsonList: { name: string; amount: number; paid?: boolean }[] = []
+    const newList: { id: number; name: string; amount: number; paid: boolean; confirm: boolean }[] = []
+
     for (const row of rows) {
       const name = normalize(row[0] || '')
       const amount = parseInt((row[1] || '').toString().replace(/[^\d]/g, '')) || 0
       if (name && amount) {
-        // add thêm id random mà không bị trùng nhay
-        const id = Math.floor(Math.random() * 1000000)
-        jsonList.push({ id: id , name, amount, paid: false, confirm: false })
+        // Kiểm tra nếu name đã có trong store.people → update
+        const existingPerson = store.people.find((p) => normalize(p.name) === name)
+        if (existingPerson) {
+          existingPerson.amount = amount
+          existingPerson.paid = false
+          existingPerson.confirm = false
+        } else {
+          // Thêm mới
+          const id = Math.floor(Math.random() * 1000000)
+          newList.push({ id, name, amount, paid: false, confirm: false })
+        }
       }
     }
 
-    store.people = jsonList
-    editableJson.value = JSON.stringify(jsonList, null, 2)
+    // Thêm các item mới vào store.people
+    store.people = [...store.people, ...newList]
 
-    // ✅ Gửi tới members API
-    await store.insertMembers(jsonList)
-    notify({ type: 'positive', message: '✅ Đã import và đẩy lên Supabase', timeout: 1000 })
+    editableJson.value = JSON.stringify(store.people, null, 2)
+
+    // ✅ Gửi tới members API (có thể gọi lại full insert hoặc update tùy store xử lý)
+    await store.insertMembers(store.people)
+    notify({ type: 'positive', message: '✅ Đã import và cập nhật Supabase', timeout: 1000 })
 
     isLoading.value = false
   }
@@ -75,16 +98,17 @@ async function onImportExcel(files: File[]) {
 
 </script>
 
+
 <template>
   <q-layout>
     <q-page-container>
       <!--      add class khi trên 768 thì dùng row, còn dưới 768 thì dùng column-->
             <div class="row row-wrap q-gutter-sm q-mt-sm q-mx-sm">
                 <q-uploader label="Import danh sách" accept=".xlsx" @added="onImportExcel" />
-                <StatementUpload />
+<!--                <StatementUpload />-->
             </div>
 
-      <h4 class="q-my-sm">Dánh sách đóng tiền</h4>
+      <h4 class="q-my-sm">Danh sách đóng tiền</h4>
       <q-separator class="q-my-sm" />
 
       <q-page>

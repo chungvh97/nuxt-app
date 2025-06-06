@@ -57,7 +57,7 @@ function startWaitingForPaid() {
     const updatedPerson = data?.find((m: any) => m.id === props.person?.id)
     if (updatedPerson && updatedPerson.paid) {
       stopWaitingForPaid()
-      notify({ type: 'positive', message: '✅ Đã nhận thanh toán từ SePay', timeout: 1000 })
+      notify({ type: 'positive', message: '✅ Đã nhận thanh toán', timeout: 1000 })
       emit('update:modelValue', false) // đóng dialog
       emit('refresh') // refresh list
     }
