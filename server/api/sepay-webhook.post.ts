@@ -6,7 +6,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// ✅ Hàm normalize bỏ dấu tiếng Việt
+// Hàm normalize bỏ dấu tiếng Việt
 function normalize(str: string): string {
     return str
         .toLowerCase()
@@ -23,14 +23,17 @@ export default defineEventHandler(async (event) => {
 
         console.log('[SePay Webhook] Nhận dữ liệu:', body)
 
-        // Lấy thông tin cần thiết
-        const { transaction_id, amount, status, note } = body
+        // Lấy thông tin cần thiết từ payload thực tế
+        const { content, transferAmount, transaction_id, description } = body
 
         // Kiểm tra dữ liệu hợp lệ
-        if (!note || !amount || status !== 'success') {
-            console.warn('[SePay Webhook] Dữ liệu không hợp lệ hoặc chưa thành công')
-            return { success: false, message: 'Dữ liệu không hợp lệ hoặc chưa thành công' }
+        if (!content || !transferAmount) {
+            console.warn('[SePay Webhook] Dữ liệu không hợp lệ hoặc thiếu content / amount')
+            return { success: false, message: 'Dữ liệu không hợp lệ hoặc thiếu content / amount' }
         }
+
+        const note = content
+        const amount = parseInt(transferAmount)
 
         // Lấy danh sách members từ Supabase
         const { data: members, error: fetchError } = await supabase.from('members').select('*')
@@ -63,10 +66,9 @@ export default defineEventHandler(async (event) => {
             .update({
                 paid: true,
                 confirmed_by: 'SePay',
-                last_transaction_id: transaction_id
+                last_transaction_id: transaction_id || '' // nếu có transaction_id thì lưu
             })
             .eq('id', matched.id)
-
 
         if (updateError) {
             console.error('Lỗi khi cập nhật member:', updateError)
