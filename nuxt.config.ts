@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'Product Manager',
+      title: 'Quỹ team',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }
       ]

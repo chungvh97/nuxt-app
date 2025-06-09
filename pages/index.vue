@@ -64,12 +64,12 @@ async function fetchMembers() {
                 field: row => row.paid ? '✅' : '❌',
                 align: 'center'
               },
-              {
-                name: 'confirm',
-                label: 'Quỹ xác nhận',
-                align: 'left',
-                field: row => row.confirm ? '✅' : '❌',
-              }
+              // {
+              //   name: 'confirm',
+              //   label: 'Quỹ xác nhận',
+              //   align: 'left',
+              //   field: row => row.confirm ? '✅' : '❌',
+              // }
             ]"
         />
 
