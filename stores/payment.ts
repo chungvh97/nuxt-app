@@ -53,9 +53,13 @@ export const usePaymentStore = defineStore('payment', () => {
         await fetchMembers()
     }
 
-    async function insertMembers(newItems: any[]) {
-        const { error } = await supabase.from('members').upsert(newItems, { onConflict: 'id' })
-        if (!error) await fetchMembers()
+    async function insertMembers(list: any[]) {
+        const { error } = await supabase
+            .from('members')
+            .upsert(list, {
+                onConflict: ['name'], // 💡 bạn cần có UNIQUE constraint trên 2 cột này
+            })
+
         return error
     }
 
@@ -75,7 +79,8 @@ export const usePaymentStore = defineStore('payment', () => {
         const { data: result, error } = await supabase
             .from('members')
             .upsert(data, {
-                onConflict: ['id'], // Vì id là PRIMARY KEY
+                onConflict: ['name'], // Vì id là PRIMARY KEY
+                ignoreDuplicates: false
             })
 
         return { data: result, error }

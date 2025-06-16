@@ -3,8 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { usePaymentStore } from '~/stores/payment'
 import { useQuasar } from 'quasar'
 
-const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar()
-
+const { notify } = useQuasar()
 const store = usePaymentStore()
 
 const selectedPerson = ref<{ name: string; amount: number } | null>(null)
@@ -33,9 +32,7 @@ async function fetchMembers() {
   if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
 }
 
-onMounted(async () => {
-  await fetchMembers()
-})
+onMounted(fetchMembers)
 
 async function onImportExcel(files: File[]) {
   const file = files[0]
@@ -46,8 +43,6 @@ async function onImportExcel(files: File[]) {
 
   reader.onload = async (evt) => {
     const data = new Uint8Array(evt.target!.result as ArrayBuffer)
-
-    // DYNAMIC import 'xlsx'
     const XLSX = await import('xlsx')
     const workbook = XLSX.read(data, { type: 'array' })
     const sheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -62,10 +57,7 @@ async function onImportExcel(files: File[]) {
       }
     }
 
-    // ⚠️ Dùng upsert theo cặp name + amount để tránh tạo bản ghi trùng
-    const { error } = await supabase
-        .from('members')
-        .upsert(jsonList, { onConflict: ['name', 'amount'] })
+    const error = await store.insertMembers(jsonList)
 
     if (error) {
       notify({ type: 'negative', message: '❌ Lỗi khi đẩy lên Supabase', timeout: 2000 })
@@ -80,7 +72,6 @@ async function onImportExcel(files: File[]) {
 
   reader.readAsArrayBuffer(file)
 }
-
 </script>
 
 
