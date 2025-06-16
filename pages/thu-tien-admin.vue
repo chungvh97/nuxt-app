@@ -45,51 +45,36 @@ async function onImportExcel(files: File[]) {
   const reader = new FileReader()
 
   reader.onload = async (evt) => {
-    // Dynamic import XLSX trong client
-    let XLSX: any
-    if (process.client) {
-      const xlsxModule = await import('xlsx')
-      XLSX = xlsxModule
-    } else {
-      notify({ type: 'negative', message: '❌ Không hỗ trợ đọc file XLSX trên server' })
-      isLoading.value = false
-      return
-    }
-
     const data = new Uint8Array(evt.target!.result as ArrayBuffer)
+
+    // DYNAMIC import 'xlsx'
+    const XLSX = await import('xlsx')
     const workbook = XLSX.read(data, { type: 'array' })
     const sheet = workbook.Sheets[workbook.SheetNames[0]]
     const rows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 })
 
-    const newList: { id: number; name: string; amount: number; paid: boolean; confirm: boolean }[] = []
-
+    const jsonList: { name: string; amount: number; paid?: boolean; confirm?: boolean }[] = []
     for (const row of rows) {
       const name = normalize(row[0] || '')
       const amount = parseInt((row[1] || '').toString().replace(/[^\d]/g, '')) || 0
       if (name && amount) {
-        // Kiểm tra nếu name đã có trong store.people → update
-        const existingPerson = store.people.find((p) => normalize(p.name) === name)
-        if (existingPerson) {
-          existingPerson.amount = amount
-          existingPerson.paid = false
-          existingPerson.confirm = false
-        } else {
-          // Thêm mới
-          const id = Math.floor(Math.random() * 1000000)
-          newList.push({ id, name, amount, paid: false, confirm: false })
-        }
+        jsonList.push({ name, amount, paid: false, confirm: false })
       }
     }
 
-    // Thêm các item mới vào store.people
-    store.people = [...store.people, ...newList]
+    // ⚠️ Dùng upsert theo cặp name + amount để tránh tạo bản ghi trùng
+    const { error } = await supabase
+        .from('members')
+        .upsert(jsonList, { onConflict: ['name', 'amount'] })
 
-    editableJson.value = JSON.stringify(store.people, null, 2)
+    if (error) {
+      notify({ type: 'negative', message: '❌ Lỗi khi đẩy lên Supabase', timeout: 2000 })
+      console.error('Supabase insert error:', error)
+    } else {
+      notify({ type: 'positive', message: '✅ Đã import và đẩy lên Supabase', timeout: 1000 })
+    }
 
-    // ✅ Gửi tới members API (có thể gọi lại full insert hoặc update tùy store xử lý)
-    await store.insertMembers(store.people)
-    notify({ type: 'positive', message: '✅ Đã import và cập nhật Supabase', timeout: 1000 })
-
+    await fetchMembers()
     isLoading.value = false
   }
 

@@ -14,6 +14,7 @@ const showDialog = ref(false)
 const isLoading = ref(false)
 
 function openPaymentModal(row: { name: string; amount: number }) {
+  if (row && row.paid) return;
   selectedPerson.value = row
   showDialog.value = true
 }

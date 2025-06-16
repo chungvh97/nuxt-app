@@ -54,7 +54,7 @@ export const usePaymentStore = defineStore('payment', () => {
     }
 
     async function insertMembers(newItems: any[]) {
-        const { error } = await supabase.from('members').insert(newItems)
+        const { error } = await supabase.from('members').upsert(newItems, { onConflict: 'id' })
         if (!error) await fetchMembers()
         return error
     }
@@ -71,6 +71,15 @@ export const usePaymentStore = defineStore('payment', () => {
         const { error } = await supabase.from('members').upsert(list, { onConflict: 'id' })
         return { error }
     }
+    async function upsertMembers(data: any[]) {
+        const { data: result, error } = await supabase
+            .from('members')
+            .upsert(data, {
+                onConflict: ['id'], // Vì id là PRIMARY KEY
+            })
+
+        return { data: result, error }
+    }
 
     return {
         people,
@@ -80,6 +89,7 @@ export const usePaymentStore = defineStore('payment', () => {
         bulkUpdateConfirm,
         overwriteMembers,
         updateMember,
-        updateConfirmByImport
+        updateConfirmByImport,
+        upsertMembers
     }
 })
