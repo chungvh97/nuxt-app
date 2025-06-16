@@ -72,6 +72,16 @@ async function onImportExcel(files: File[]) {
 
   reader.readAsArrayBuffer(file)
 }
+
+const totalAmount = computed(() =>
+    store.people.reduce((sum, p) => sum + (p.amount || 0), 0)
+)
+
+const totalCollected = computed(() =>
+    store.people
+        .filter(p => p.paid)
+        .reduce((sum, p) => sum + (p.amount || 0), 0)
+)
 </script>
 
 
@@ -85,6 +95,10 @@ async function onImportExcel(files: File[]) {
             </div>
 
       <h4 class="q-my-sm">Danh sách đóng tiền</h4>
+      <div class="text-right q-pa-sm">
+        <div><b>Tổng số tiền cần thu:</b> {{ totalAmount.toLocaleString('vi-VN') }} VND</div>
+        <div><b>Đã thu:</b> {{ totalCollected.toLocaleString('vi-VN') }} VND</div>
+      </div>
       <q-separator class="q-my-sm" />
 
       <q-page>
@@ -108,12 +122,12 @@ async function onImportExcel(files: File[]) {
                 field: row => row.paid ? '✅' : '❌',
                 align: 'center'
               },
-              {
-                name: 'confirm',
-                label: 'Quỹ xác nhận',
-                align: 'left',
-                field: row => row.confirm ? '✅' : '❌',
-              }
+              // {
+              //   name: 'confirm',
+              //   label: 'Quỹ xác nhận',
+              //   align: 'left',
+              //   field: row => row.confirm ? '✅' : '❌',
+              // }
             ]"
         />
 

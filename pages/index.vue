@@ -35,6 +35,17 @@ async function fetchMembers() {
   }
   if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
 }
+
+
+const totalAmount = computed(() =>
+    store.people.reduce((sum, p) => sum + (p.amount || 0), 0)
+)
+
+const totalCollected = computed(() =>
+    store.people
+        .filter(p => p.paid)
+        .reduce((sum, p) => sum + (p.amount || 0), 0)
+)
 </script>
 
 <template>
@@ -42,6 +53,10 @@ async function fetchMembers() {
     <q-page-container>
 
       <h4 class="q-my-sm">Danh sách đóng tiền</h4>
+      <div class="text-right q-pa-sm">
+        <div><b>Tổng số tiền cần thu:</b> {{ totalAmount.toLocaleString('vi-VN') }} VND</div>
+        <div><b>Đã thu:</b> {{ totalCollected.toLocaleString('vi-VN') }} VND</div>
+      </div>
       <q-separator class="q-my-sm" />
 
       <q-page>
