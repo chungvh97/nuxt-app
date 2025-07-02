@@ -9,13 +9,32 @@ export default defineEventHandler(async (event) => {
     const SHEET_NAME = 'ThuTiền_Tool'; // Hoặc tên trang tính của bạn
 
     try {
-        // Tạo đối tượng xác thực
-        const auth = new google.auth.GoogleAuth({
-            // Chỉ định đường dẫn đến tệp khóa JSON
-            keyFile: path.join(process.cwd(), 'google-credentials.json'),
-            // Chỉ định phạm vi (scope) cần thiết. 'spreadsheets' cho phép cả đọc và ghi.
-            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-        });
+        let auth;
+        if (process.env.GOOGLE_CREDENTIALS_JSON) {
+            // 1. Đọc chuỗi JSON từ biến môi trường
+            const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
+            if (!credentialsJson) {
+                throw new Error('Google credentials JSON is not set in environment variables');
+            }
+
+            // 2. Chuyển chuỗi JSON thành object
+            const credentials = JSON.parse(credentialsJson);
+
+            // Tạo đối tượng xác thực
+            auth = new google.auth.GoogleAuth({
+                // Chỉ định đường dẫn đến tệp khóa JSON
+                credentials, // <--- Thay đổi ở đây
+                // Chỉ định phạm vi (scope) cần thiết. 'spreadsheets' cho phép cả đọc và ghi.
+                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+            });
+        } else {
+            auth = new google.auth.GoogleAuth({
+                // Chỉ định đường dẫn đến tệp khóa JSON
+                keyFile: path.join(process.cwd(), 'google-credentials.json'),
+                // Chỉ định phạm vi (scope) cần thiết. 'spreadsheets' cho phép cả đọc và ghi.
+                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+            });
+        }
 
         // Tạo một client đã được xác thực
         const sheets = google.sheets({ version: 'v4', auth });
