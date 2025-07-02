@@ -7,10 +7,18 @@ import { usePaymentStore } from '~/stores/payment'
 const { notify } = useQuasar()
 const store = usePaymentStore()
 
-const props = defineProps<{
-  modelValue: boolean
-  person: { id: number, name: string; amount: number, paid: boolean, confirm: boolean } | null
-}>()
+const props= defineProps({
+  modelValue: Boolean,
+  person: {
+    type: Object as () => { id: number, name: string; amount: number, paid: boolean, confirm: boolean } | null,
+    default: null
+  },
+  nameGroup: {
+    type: String,
+    required: true,
+    default: 'FE'
+  }
+})
 
 const emit = defineEmits(['update:modelValue', 'refresh'])
 
@@ -36,9 +44,20 @@ watch(() => props.modelValue, (val) => {
   }
 })
 
+const iBank = reactive({
+  'FE' : {
+    acc: 'VQRQACTIP6004',
+    bank: 'MBBank',
+  },
+  'BE': {
+    acc: 'SEPHKH130894',
+    bank: 'OCB',
+  }
+})
+
 function generateVietQRUrl(name: string, amount: number): string {
   const info = encodeURIComponent(`${name} tháng ${currentMonth}`)
-  return `https://qr.sepay.vn/img?acc=VQRQACTIP6004&bank=MBBank&amount=${amount}&des=${info}`
+  return `https://qr.sepay.vn/img?acc=${iBank[props.nameGroup].acc}&bank=${iBank[props.nameGroup].bank}&amount=${amount}&des=${info}`
 }
 
 function startWaitingForPaid() {
@@ -48,7 +67,7 @@ function startWaitingForPaid() {
   isWaitingForPaid.value = true
 
   intervalId = setInterval(async () => {
-    const { data, error } = await store.fetchMembers()
+    const { data, error } = await store.fetchMembers(props.nameGroup)
     if (error) {
       console.error('Lỗi khi fetch members:', error)
       return
@@ -74,10 +93,10 @@ function stopWaitingForPaid() {
 </script>
 
 <template>
-  <q-dialog v-model="dialog">
+  <q-dialog v-model="dialog" persistent>
     <q-card style="min-width: 500px">
       <q-card-section class="text-h6">
-        Thanh toán cho {{ person?.name }}
+        Tên đóng quỹ: {{ person?.name }} - {{props.nameGroup}}
       </q-card-section>
 
       <q-card-section>
@@ -97,9 +116,9 @@ function stopWaitingForPaid() {
         </div>
       </q-card-section>
 
-      <q-card-actions align="right">
-        <q-btn flat label="Đóng" color="primary" v-close-popup />
-      </q-card-actions>
+<!--      <q-card-actions align="right">-->
+<!--        <q-btn flat label="Đóng" color="primary" v-close-popup />-->
+<!--      </q-card-actions>-->
     </q-card>
   </q-dialog>
 </template>

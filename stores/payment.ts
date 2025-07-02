@@ -1,20 +1,3 @@
-// import { defineStore } from 'pinia'
-//
-// export const usePaymentStore = defineStore('payment', {
-//     state: () => ({
-//         people: [] as { name: string; amount: number; paid: boolean, confirm: boolean }[]
-//     }),
-//     actions: {
-//         markPaid(name: string, amount: number) {
-//             const person = this.people.find(p => p.name === name && p.amount === amount)
-//             if (person) person.confirm = true
-//         },
-//         setPeople: function (people: { name: string; amount: number; paid: boolean, confirm: boolean }[]) {
-//             this.people = people
-//         }
-//     }
-// })
-
 // stores/payment.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -24,10 +7,21 @@ export const usePaymentStore = defineStore('payment', () => {
     const people = ref<any[]>([])
     const loading = ref(false)
 
-    async function fetchMembers() {
+    async function fetchMembers(nameGroup?: string) {
         loading.value = true
-        const { data, error } = await supabase.from('members').select('*').order('name', { ascending: true })
-        if (!error) people.value = data || []
+        // query theo nameGroup nếu có
+        const query = supabase.from('members').select('*').order('name', { ascending: true })
+        if (nameGroup) {
+            query.eq('group', nameGroup)
+        }
+        const { data, error } = await query
+            .order('name', { ascending: true })
+
+        if (!error) people.value = data.map((ite,idx) => {
+            ite.index = idx + 1 // thêm index vào mỗi item
+            return ite
+        }) || []
+
         loading.value = false
         return { data, error }
     }

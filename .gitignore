@@ -5,6 +5,7 @@
 .nitro
 .cache
 dist
+google-credentials.json
 
 # Node dependencies
 node_modules

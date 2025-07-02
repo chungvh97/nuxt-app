@@ -1,97 +1,65 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
-import { usePaymentStore } from '~/stores/payment'
-import * as XLSX from "xlsx";
-import {useQuasar} from "quasar";
-const { dialog, bottomSheet, loading, loadingBar, notify, dark, screen } = useQuasar();
-import { supabase } from '~/composables/useSupabase'
-const store = usePaymentStore()
-
-
-const selectedPerson = ref<{ name: string; amount: number } | null>(null)
-const showDialog = ref(false)
-
-const isLoading = ref(false)
-
-function openPaymentModal(row: { name: string; amount: number }) {
-  if (row && row.paid) return;
-  selectedPerson.value = row
-  showDialog.value = true
-}
-const jsonOutput = ref('')
-const editableJson = ref('')
-
-onMounted(async () => {
-  await fetchMembers()
-})
-
-
-async function fetchMembers() {
-  const { data, error } = await store.fetchMembers()
-  if (data) {
-    jsonOutput.value = JSON.stringify(data, null, 2)
-    editableJson.value = JSON.stringify(data, null, 2)
-    notify({ type: 'info', message: '📥 Load dữ liệu thành công' })
+const activeGroup = ref('')
+const dataGroup = ref([
+  {
+    label: 'FE',
+    class: 'fe-side'
+  },
+  {
+    label: 'BE',
+    class: 'be-side'
   }
-  if (error) notify({ type: 'negative', message: '❌ Không thể tải dữ liệu', timeout: 1000 })
-}
-
-
-const totalAmount = computed(() =>
-    store.people.reduce((sum, p) => sum + (p.amount || 0), 0)
-)
-
-const totalCollected = computed(() =>
-    store.people
-        .filter(p => p.paid)
-        .reduce((sum, p) => sum + (p.amount || 0), 0)
-)
+])
 </script>
 
 <template>
   <q-layout>
     <q-page-container>
-
-      <h4 class="q-my-sm">Danh sách đóng tiền</h4>
-      <div class="text-right q-pa-sm">
-        <div><b>Tổng số tiền cần thu:</b> {{ totalAmount.toLocaleString('vi-VN') }} VND</div>
-        <div><b>Đã thu:</b> {{ totalCollected.toLocaleString('vi-VN') }} VND</div>
-      </div>
-      <q-separator class="q-my-sm" />
-
-      <q-page>
-        <q-table
-            :rows="store.people"
-            :loading="isLoading"
-            :pagination="{ rowsPerPage: 100 }"
-            @row-click="(_, row) => openPaymentModal(row)"
-            :columns="[
-              { name: 'name', label: 'Họ tên', field: 'name', align: 'left' },
-              {
-                name: 'amount',
-                label: 'Số tiền',
-                field: 'amount',
-                align: 'right',
-                format: val => `${val.toLocaleString('vi-VN')}`
-              },
-              {
-                name: 'paid',
-                label: 'Đã đóng',
-                field: row => row.paid ? '✅' : '❌',
-                align: 'center'
-              },
-              // {
-              //   name: 'confirm',
-              //   label: 'Quỹ xác nhận',
-              //   align: 'left',
-              //   field: row => row.confirm ? '✅' : '❌',
-              // }
-            ]"
-        />
-
-        <!-- Gọi component modal -->
-        <PaymentDialog v-model="showDialog" :person="selectedPerson" @refresh="fetchMembers"/>
+      <q-page class="row no-wrap" v-if="!activeGroup">
+        <div v-for="item in dataGroup" class="col-6 flex flex-center" :key="item.label" :class="item.class">
+          <q-btn
+              unelevated
+              class="full-width full-height custom-btn"
+              :label="item.label"
+              @click="activeGroup = item.label"
+          />
+        </div>
       </q-page>
+      <PagesHome :activeGroup="activeGroup" v-if="activeGroup"/>
     </q-page-container>
   </q-layout>
 </template>
+
+<style scoped>
+/* FIX: Thêm overflow: hidden để ẩn phần tử bị tràn ra ngoài khi scale */
+.q-page {
+  padding: 0 !important;
+  overflow: hidden; /* <-- THÊM DÒNG NÀY */
+}
+
+/* Định nghĩa màu nền cho từng bên */
+.fe-side {
+  background-color: #ffdde1; /* Màu hồng pastel */
+}
+
+.be-side {
+  background-color: #d4e4ff; /* Màu xanh pastel */
+}
+
+/* Tùy chỉnh chung cho button */
+.custom-btn {
+  font-size: 4rem; /* Kích thước chữ rất lớn */
+  font-weight: bold;
+  border-radius: 0; /* Bỏ bo góc để lấp đầy màn hình */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Hiệu ứng chuyển động mượt mà */
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Thêm bóng cho chữ để nổi bật */
+}
+
+/* Hiệu ứng khi di chuột vào */
+.custom-btn:hover {
+  transform: scale(1.02); /* Phóng to nhẹ nút bấm */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Thêm hiệu ứng đổ bóng */
+  z-index: 1; /* Đảm bảo nút được nổi lên trên */
+}
+</style>
