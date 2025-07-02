@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '~/composables/useSupabase'
+import {normalize, parseNumber} from "~/composables/fnCommon";
 
 export const usePaymentStore = defineStore('payment', () => {
     const people = ref<any[]>([])
@@ -48,30 +49,37 @@ export const usePaymentStore = defineStore('payment', () => {
     }
 
     async function insertMembers(list: any[]) {
-        // const { error } = await supabase
-        //     .from('members')
-        //     .upsert(list, {
-        //         onConflict: ['name'], // 💡 bạn cần có UNIQUE constraint trên 2 cột này
-        //     })
-        //
-        // return error
-
         const { data: members } = await supabase.from('members').select('*')
         if (!members) return
 
-        const updated = members.map(member => {
-            if (!member.name || !member.amount) return member // Bỏ qua nếu không có name hoặc amount
-            const match = list.find(t => (t.name === member.name) && (t.amount === member.amount))
-            console.log(match, member.name, member.amount)
-            return { ...member, confirm: !!match }
+        const updated = list.map(item => {
+            const existing = members.find(m => normalize(m.name) === normalize(item.name) && normalize(m.group) === normalize(item.group))
+            if (existing) {
+                // Nếu đã tồn tại, cập nhật thông tin
+                // kiểm tra nếu amount từ list khác với memers thì cập nhật amount
+                if (item.amount && (item.amount !== existing.amount)) {
+                    item.amount = parseNumber(item.amount)
+                } else {
+                    item.amount = existing.amount // giữ nguyên amount nếu không có thay đổi
+                }
+                item.paid = existing.paid // giữ nguyên paid
+
+                // remove id từ item để Supabase tự tạo
+                delete item.id
+                delete existing.id
+                return { ...existing, ...item }
+            } else {
+                return { ...item} // id sẽ được tự động tạo bởi Supabase
+            }
         })
 
-        for (const u of updated) {
-            await supabase.from('members').update({ confirm: u.confirm }).eq('id', u.id)
-        }
+        const { error } = await supabase
+            .from('members')
+            .upsert(updated, {
+                onConflict: ['name'], // 💡 bạn cần có UNIQUE constraint trên 2 cột này
+            })
 
-
-
+        return error
     }
 
     async function bulkUpdateConfirm(updates: { id: number, confirm: boolean }[]) {
