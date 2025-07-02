@@ -48,13 +48,30 @@ export const usePaymentStore = defineStore('payment', () => {
     }
 
     async function insertMembers(list: any[]) {
-        const { error } = await supabase
-            .from('members')
-            .upsert(list, {
-                onConflict: ['name'], // 💡 bạn cần có UNIQUE constraint trên 2 cột này
-            })
+        // const { error } = await supabase
+        //     .from('members')
+        //     .upsert(list, {
+        //         onConflict: ['name'], // 💡 bạn cần có UNIQUE constraint trên 2 cột này
+        //     })
+        //
+        // return error
 
-        return error
+        const { data: members } = await supabase.from('members').select('*')
+        if (!members) return
+
+        const updated = members.map(member => {
+            if (!member.name || !member.amount) return member // Bỏ qua nếu không có name hoặc amount
+            const match = list.find(t => (t.name === member.name) && (t.amount === member.amount))
+            console.log(match, member.name, member.amount)
+            return { ...member, confirm: !!match }
+        })
+
+        for (const u of updated) {
+            await supabase.from('members').update({ confirm: u.confirm }).eq('id', u.id)
+        }
+
+
+
     }
 
     async function bulkUpdateConfirm(updates: { id: number, confirm: boolean }[]) {

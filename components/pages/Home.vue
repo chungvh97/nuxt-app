@@ -39,7 +39,6 @@ watch(data, async (newData) => {
         })
       }
 
-      console.log(row)
       // Case onsite & special
       if (name && (row['tổng_tiền_cần_đóng'] === '0')) {
         jsonList.push({
