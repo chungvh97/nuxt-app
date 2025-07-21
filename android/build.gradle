@@ -32,6 +32,15 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // ✅ THÊM ĐOẠN MÃ NÀY VÀO
+    // Đoạn mã này sẽ áp dụng cho TOÀN BỘ dự án, bao gồm cả các plugin.
+    // Nó sẽ tìm tất cả các tác vụ biên dịch Java và đặt phiên bản cho chúng.
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += ["-Xlint:deprecation"]
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
 
 task clean(type: Delete) {
