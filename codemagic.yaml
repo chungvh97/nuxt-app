@@ -4,13 +4,13 @@ workflows:
     max_build_duration: 60
     environment:
       node: 20
-      java: 17
+      java: 21
     scripts:
       - npm install
       - npm run generate
       - npm install -g @capacitor/cli cordova
       - npx cap sync android
       - cd android && chmod +x ./gradlew
-      - cd android && ./gradlew assembleDebug
+      - cd android && ./gradlew assembleDebug --info # ✅ THÊM --info VÀO CUỐI
     artifacts:
       - android/app/build/outputs/**/*.apk
