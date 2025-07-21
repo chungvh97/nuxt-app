@@ -9,7 +9,6 @@ workflows:
       - npm install
       - npm run generate
       - npm install -g @capacitor/cli cordova
-      - npx cap add android
       - npx cap sync android
       - cd android && chmod +x ./gradlew
       - cd android && ./gradlew assembleDebug
