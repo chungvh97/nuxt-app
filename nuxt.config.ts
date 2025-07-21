@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   nitro: {
-    preset: 'vercel' // phải có preset hoặc adapter phù hợp
+    // preset: 'vercel' // phải có preset hoặc adapter phù hợp
   },
   app: {
     head: {
